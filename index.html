@@ -1,0 +1,857 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Potential explorer | PHY709</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;600;700&family=Source+Serif+4:wght@500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+  --bg:#f6f8fa; --panel:#ffffff; --ink:#1b2733; --muted:#5b6b7a; --line:#d7dee6; --soft:#edf1f5;
+  --teal:#1f6f8b; --amber:#b8651b; --brick:#b3402f; --green:#2e7d5b; --plot:#ffffff; --on-amber:#ffffff; --amber-btn:#a35712;
+  --serif:"Source Serif 4",Cambria,Georgia,"Times New Roman",serif;
+  --sans:"Source Sans 3",Calibri,"Segoe UI",system-ui,-apple-system,Arial,sans-serif;
+  --fs:16px;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0c1826; --panel:#112238; --ink:#e7edf4; --muted:#9aa9b9; --line:#29415b; --soft:#17304a;
+    --teal:#5cb8d1; --amber:#f0a04b; --brick:#ef8b78; --green:#6fcf9a; --plot:#0f2035; --on-amber:#10202f; --amber-btn:#f0a04b;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0c1826; --panel:#112238; --ink:#e7edf4; --muted:#9aa9b9; --line:#29415b; --soft:#17304a;
+  --teal:#5cb8d1; --amber:#f0a04b; --brick:#ef8b78; --green:#6fcf9a; --plot:#0f2035; --on-amber:#10202f; --amber-btn:#f0a04b;
+}
+html{scroll-padding-top:env(safe-area-inset-top,0px);height:100%}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:var(--fs);line-height:1.5;min-height:100%}
+body.big{--fs:19px}
+main{max-width:1180px;margin:0 auto;padding:18px 16px 48px}
+header{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:14px}
+h1{font-family:var(--serif);font-weight:600;font-size:1.9rem;line-height:1.15;margin:0 0 4px;letter-spacing:-.01em}
+h2{font-family:var(--serif);font-weight:600;font-size:1.1rem;margin:0 0 6px}
+.course{margin:0;color:var(--muted);font-size:.95rem}
+p{margin:0 0 8px}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible,select:focus-visible,input:focus-visible,[role=tab]:focus-visible,canvas:focus-visible{outline:2px solid var(--teal);outline-offset:2px}
+.ghost{background:transparent;border:1px solid var(--line);border-radius:6px;padding:6px 12px;white-space:nowrap}
+.ghost:hover{background:var(--soft)}
+.ghost[aria-pressed=true]{background:var(--soft);border-color:var(--teal)}
+nav[role=tablist]{display:flex;gap:4px;border-bottom:1px solid var(--line);margin-bottom:14px;overflow-x:auto}
+[role=tab]{background:none;border:0;border-bottom:3px solid transparent;padding:9px 14px;font-weight:600;color:var(--muted);white-space:nowrap}
+[role=tab][aria-selected=true]{color:var(--ink);border-bottom-color:var(--amber)}
+[role=tab]:hover{color:var(--ink)}
+.lede{max-width:70ch;color:var(--muted);margin-bottom:14px}
+.stage{display:grid;grid-template-columns:minmax(0,1fr);gap:18px;align-items:start}
+@media(min-width:960px){.stage{grid-template-columns:minmax(0,1fr) 340px}}
+.cv{background:var(--plot);border:1px solid var(--line);border-radius:6px;overflow:hidden;position:relative}
+.cv canvas{display:block;width:100%;touch-action:none}
+.cv + .cv{margin-top:12px}
+.cap{font-size:.88rem;color:var(--muted);margin:6px 2px 0}
+.side>section{padding:12px 0;border-top:1px solid var(--line)}
+.side>section:first-child{border-top:0;padding-top:0}
+.row{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin:8px 0 2px}
+.row label{font-weight:600}
+.row output{font-variant-numeric:tabular-nums;color:var(--muted);white-space:nowrap}
+input[type=range]{width:100%;accent-color:var(--amber);margin:2px 0 6px}
+select{width:100%;font:inherit;padding:7px 8px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--ink)}
+.seg{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0 6px}
+.seg button{border:1px solid var(--line);background:var(--panel);border-radius:6px;padding:6px 10px}
+.seg button[aria-pressed=true]{border-color:var(--teal);background:var(--soft);font-weight:600}
+.seg button:hover{background:var(--soft)}
+.chk{display:flex;gap:8px;align-items:center;margin:4px 0}
+.chk input{accent-color:var(--teal);width:16px;height:16px}
+dl{margin:0;display:grid;grid-template-columns:auto 1fr;gap:3px 12px}
+dt{color:var(--muted)}
+dd{margin:0;text-align:right;font-variant-numeric:tabular-nums}
+.eq{font-family:var(--serif);font-size:1.02rem}
+.eq sub,.eq sup{font-size:.7em;line-height:0}
+.legend{display:flex;gap:16px;flex-wrap:wrap;font-size:.9rem;color:var(--muted);margin:6px 2px 0}
+.legend i{display:inline-block;width:22px;height:0;border-top:3px solid;vertical-align:middle;margin-right:6px}
+.checks{list-style:none;margin:0;padding:0}
+.checks li{display:grid;grid-template-columns:24px 1fr;gap:8px;padding:7px 0;border-top:1px solid var(--line)}
+.checks li:first-child{border-top:0}
+.mark{font-weight:700;text-align:center;font-size:1.2em;line-height:1.25}
+.pass .mark{color:var(--green)} .fail .mark{color:var(--brick)} .na .mark{color:var(--muted)}
+.checks b{display:block}
+.checks span{font-size:.9rem;color:var(--muted);font-variant-numeric:tabular-nums}
+.fail b{color:var(--brick)}
+.note{font-size:.9rem;color:var(--muted)}
+.btns{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0}
+.btns button{border:1px solid var(--line);background:var(--panel);border-radius:6px;padding:6px 11px}
+.btns button:hover{background:var(--soft)}
+.btns .primary{background:var(--amber-btn);border-color:var(--amber-btn);color:var(--on-amber);font-weight:600}
+.btns .primary:hover{background:var(--amber-btn);filter:brightness(1.1)}
+table{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums;font-size:.92rem}
+th,td{text-align:right;padding:4px 6px;border-top:1px solid var(--line)}
+th:first-child,td:first-child{text-align:left}
+th{font-weight:600;color:var(--muted);border-top:0}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0}
+.chip{border:1px solid var(--line);background:var(--panel);border-radius:999px;padding:3px 11px;font-variant-numeric:tabular-nums}
+.chip[aria-pressed=true]{border-color:var(--amber);background:var(--soft);font-weight:600}
+.quiz{max-width:720px}
+.qmeta{display:flex;justify-content:space-between;color:var(--muted);margin-bottom:8px}
+.q{font-family:var(--serif);font-size:1.25rem;line-height:1.35;margin:0 0 12px}
+.opts{display:grid;gap:8px;margin:0 0 12px;padding:0;list-style:none}
+.opts button{width:100%;text-align:left;border:1px solid var(--line);background:var(--panel);border-radius:6px;padding:10px 12px;line-height:1.4}
+.opts button:hover:not(:disabled){background:var(--soft)}
+.opts button.right{border-color:var(--green);background:var(--soft)}
+.opts button.wrong{border-color:var(--brick)}
+.opts button:disabled{cursor:default;color:var(--ink)}
+.why{border-left:3px solid var(--teal);padding:2px 0 2px 12px;margin:0 0 12px}
+.hidden{display:none !important}
+footer{margin-top:28px;color:var(--muted);font-size:.88rem;max-width:80ch}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+@media (prefers-reduced-motion: no-preference){ .opts button,.ghost,[role=tab]{transition:background .12s,border-color .12s} }
+
+</style>
+</head>
+<body>
+<main>
+<header>
+  <div>
+    <h1>Potential explorer</h1>
+    <p class="course">PHY709 Advanced Electromagnetic Fields and Waves, COMSATS University Islamabad</p>
+    <p class="course">Lecture: the electrostatic potential and the Poisson–Laplace equations</p>
+  </div>
+  <button class="ghost" id="big" aria-pressed="false" title="Larger text for the projector">Larger text</button>
+</header>
+
+<nav role="tablist" aria-label="Explorer sections">
+  <button role="tab" id="tab-a" aria-selected="true" aria-controls="pa">Charges and field</button>
+  <button role="tab" id="tab-b" aria-selected="false" aria-controls="pb" tabindex="-1">Solve and check</button>
+  <button role="tab" id="tab-c" aria-selected="false" aria-controls="pc" tabindex="-1">Relaxation</button>
+  <button role="tab" id="tab-d" aria-selected="false" aria-controls="pd" tabindex="-1">Quiz</button>
+</nav>
+
+<!-- A -->
+<section id="pa" role="tabpanel" aria-labelledby="tab-a">
+  <p class="lede">Drag a charge, or move the probe. The bold contour passes through the probe, and E crosses it at a right angle. Slides 7, 8 and 20.</p>
+  <div class="stage">
+    <div>
+      <div class="cv"><canvas id="cA" tabindex="0" aria-label="Potential map with movable charges. Arrow keys move the selected charge."></canvas></div>
+      <div class="legend">
+        <span><i style="border-color:var(--amber)"></i>Φ &gt; 0</span>
+        <span><i style="border-color:var(--teal)"></i>Φ &lt; 0</span>
+        <span><i style="border-color:var(--brick)"></i>E at the probe</span>
+      </div>
+      <p class="cap">Thin lines are equipotentials at equal steps of Φ. Small arrows show the direction of E. The charges sit in the plane; the potential is the full three-dimensional one, in units where 1/(4πε₀) = 1.</p>
+    </div>
+    <div class="side">
+      <section>
+        <h2>Charges</h2>
+        <div class="seg" id="presets" role="group" aria-label="Presets">
+          <button data-p="single">Single</button><button data-p="dipole" aria-pressed="true">Dipole</button><button data-p="like">Like pair</button><button data-p="quad">Quadrupole</button>
+        </div>
+        <div class="chips" id="chips" role="group" aria-label="Charges"></div>
+        <div class="row"><label for="qA">Selected charge</label><output id="qAo" for="qA"></output></div>
+        <input type="range" id="qA" min="-4" max="4" step="0.5" value="2">
+        <div class="btns"><button id="addP">Add +</button><button id="addN">Add −</button><button id="delC">Remove selected</button></div>
+      </section>
+      <section>
+        <h2>Show</h2>
+        <label class="chk"><input type="checkbox" id="shHeat" checked> Potential colour map</label>
+        <label class="chk"><input type="checkbox" id="shLines" checked> Equipotentials</label>
+        <label class="chk"><input type="checkbox" id="shArrows" checked> Field arrows</label>
+        <label class="chk"><input type="checkbox" id="follow" checked> Probe follows the pointer</label>
+        <div class="row"><label for="spA">Equipotential step</label><output id="spAo" for="spA"></output></div>
+        <input type="range" id="spA" min="0.25" max="2" step="0.25" value="0.5">
+      </section>
+      <section>
+        <h2>At the probe</h2>
+        <dl><dt>Φ</dt><dd id="rPhi"></dd><dt>|E|</dt><dd id="rE"></dd><dt>Direction of E</dt><dd id="rAng"></dd></dl>
+      </section>
+      <section>
+        <h2>Average over a sphere</h2>
+        <div class="row"><label for="rsA">Sphere radius</label><output id="rsAo" for="rsA"></output></div>
+        <input type="range" id="rsA" min="0.2" max="3" step="0.1" value="1">
+        <dl><dt>Φ at the centre</dt><dd id="mvC"></dd><dt>Average on the sphere</dt><dd id="mvA"></dd><dt>Charges inside</dt><dd id="mvN"></dd></dl>
+        <p class="note" id="mvNote"></p>
+      </section>
+    </div>
+  </div>
+</section>
+
+<!-- B -->
+<section id="pb" role="tabpanel" aria-labelledby="tab-b" class="hidden">
+  <p class="lede">Choose a geometry and read off Φ and E. Then run the four checks, and break the solution on purpose to see which check catches it. Slides 15 to 19.</p>
+  <div class="stage">
+    <div>
+      <div class="cv"><canvas id="cB1" role="img" aria-label="Plot of the potential"></canvas></div>
+      <div class="cv"><canvas id="cB2" role="img" aria-label="Plot of the electric field"></canvas></div>
+      <div class="legend" id="legB"></div>
+    </div>
+    <div class="side">
+      <section>
+        <h2>Geometry</h2>
+        <div class="seg" id="modeB" role="group" aria-label="Geometry">
+          <button data-m="plates">Parallel plates</button><button data-m="sphere" aria-pressed="true">Solid sphere</button><button data-m="shell">Spherical shell</button>
+        </div>
+        <p class="note hidden" id="shellNote">Use the shell to check your answer to the group problem.</p>
+        <div id="ctlRad">
+          <div class="seg" id="signB" role="group" aria-label="Sign of the charge"><button data-s="1" aria-pressed="true">Positive charge</button><button data-s="-1">Negative charge</button></div>
+          <div class="row"><label for="qB">Total charge Q</label><output id="qBo" for="qB"></output></div>
+          <input type="range" id="qB" min="1" max="20" step="1" value="10">
+          <div class="row"><label for="rB">Radius R</label><output id="rBo" for="rB"></output></div>
+          <input type="range" id="rB" min="2" max="10" step="0.5" value="5">
+        </div>
+        <div id="ctlPl" class="hidden">
+          <div class="row"><label for="vB">Voltage V₀</label><output id="vBo" for="vB"></output></div>
+          <input type="range" id="vB" min="1" max="20" step="0.5" value="10">
+          <div class="row"><label for="dB">Gap d</label><output id="dBo" for="dB"></output></div>
+          <input type="range" id="dB" min="1" max="10" step="0.5" value="5">
+        </div>
+      </section>
+      <section>
+        <h2>Probe</h2>
+        <div class="row"><label for="pB" id="pBl">Position r / R</label><output id="pBo" for="pB"></output></div>
+        <input type="range" id="pB" min="0" max="3" step="0.05" value="0.5">
+        <dl><dt>Region</dt><dd id="bReg"></dd><dt>Φ</dt><dd id="bPhi"></dd><dt>E</dt><dd id="bE"></dd><dt>Charge density</dt><dd id="bRho"></dd></dl>
+      </section>
+      <section id="errSec">
+        <h2>Break it on purpose</h2>
+        <label class="sr" for="errB">Mistake to introduce</label>
+        <select id="errB"></select>
+        <p class="note" id="errNote"></p>
+      </section>
+      <section>
+        <h2>The four checks</h2>
+        <ul class="checks" id="checksB"></ul>
+      </section>
+      <section>
+        <h2>Solution used</h2>
+        <div class="eq" id="formB"></div>
+        <label class="chk hidden" id="showFWrap"><input type="checkbox" id="showF"> Show the formulas (after you have tried the group problem)</label>
+      </section>
+    </div>
+  </div>
+</section>
+
+<!-- C -->
+<section id="pc" role="tabpanel" aria-labelledby="tab-c" class="hidden">
+  <p class="lede">Laplace's equation in two dimensions says each value is the mean of its four neighbours. Set the four sides, then let that rule run. Slides 20 and 26.</p>
+  <div class="stage">
+    <div>
+      <div class="cv" style="max-width:560px"><canvas id="cC1" role="img" aria-label="Potential on a square grid"></canvas></div>
+      <div class="cv" style="max-width:560px"><canvas id="cC2" role="img" aria-label="Convergence history"></canvas></div>
+      <p class="cap">Top: potential in the square, with equipotentials. Bottom: the largest change in any value during each sweep, on a log scale.</p>
+    </div>
+    <div class="side">
+      <section>
+        <h2>Voltages on the four sides</h2>
+        <div class="row"><label for="vT">Top</label><output id="vTo" for="vT"></output></div><input type="range" id="vT" min="-10" max="10" step="1" value="10">
+        <div class="row"><label for="vBt">Bottom</label><output id="vBto" for="vBt"></output></div><input type="range" id="vBt" min="-10" max="10" step="1" value="0">
+        <div class="row"><label for="vL">Left</label><output id="vLo" for="vL"></output></div><input type="range" id="vL" min="-10" max="10" step="1" value="0">
+        <div class="row"><label for="vR">Right</label><output id="vRo" for="vR"></output></div><input type="range" id="vR" min="-10" max="10" step="1" value="0">
+      </section>
+      <section>
+        <h2>Grid and method</h2>
+        <div class="seg" id="gridC" role="group" aria-label="Grid size"><button data-n="15">h = 1/16</button><button data-n="31" aria-pressed="true">h = 1/32</button><button data-n="63">h = 1/64</button></div>
+        <label class="chk"><input type="checkbox" id="sor" checked> Over-relaxation (converges faster)</label>
+        <div class="row"><label for="spC">Sweeps per frame</label><output id="spCo" for="spC"></output></div>
+        <input type="range" id="spC" min="1" max="40" step="1" value="4">
+        <div class="btns"><button id="runC" class="primary">Run</button><button id="stepC">One sweep</button><button id="resetC">Reset</button></div>
+      </section>
+      <section>
+        <h2>Readouts</h2>
+        <dl>
+          <dt>Sweeps</dt><dd id="cIt"></dd>
+          <dt>Largest residual</dt><dd id="cRes"></dd>
+          <dt>Φ at (0.25, 0.75)</dt><dd id="cPr"></dd>
+          <dt>Φ at the centre</dt><dd id="cCe"></dd>
+          <dt>Mean of the four sides</dt><dd id="cMean"></dd>
+          <dt>Interior range</dt><dd id="cInt"></dd>
+          <dt>Boundary range</dt><dd id="cBnd"></dd>
+        </dl>
+        <p class="note" id="cNote"></p>
+      </section>
+      <section>
+        <h2>Halving h</h2>
+        <div class="btns"><button id="fillT">Converge all three grids</button></div>
+        <table><thead><tr><th>Grid</th><th>Φ at (0.25, 0.75)</th><th>Change</th></tr></thead><tbody id="tabC"></tbody></table>
+        <p class="note">The last row is the Fourier-series value for the same sides. Use it to check your own code.</p>
+      </section>
+    </div>
+  </div>
+</section>
+
+<!-- D -->
+<section id="pd" role="tabpanel" aria-labelledby="tab-d" class="hidden">
+  <p class="lede">Nine questions from the lecture. Pick an answer to see why.</p>
+  <div class="quiz" id="quiz"></div>
+</section>
+
+<footer>
+  Formulas follow Jackson, Classical Electrodynamics, 3rd ed., Chapter 1. The first tab uses units with 1/(4πε₀) = 1. The second tab uses SI units with ε₀ = 8.854 × 10⁻¹² F/m. Run the numbers yourself before you rely on them in an assignment.
+</footer>
+</main>
+
+<script>
+/* ===== core physics (pure functions, testable in node) ===== */
+const EPS0 = 8.8541878128e-12;
+
+/* ---- point charges in a plane, arbitrary units with 1/(4 pi eps0) = 1 ---- */
+function potentialAt(charges, x, y, z, soft) {
+  z = z || 0; soft = soft || 0;
+  let p = 0;
+  for (const c of charges) {
+    const dx = x - c.x, dy = y - c.y;
+    p += c.q / Math.sqrt(dx * dx + dy * dy + z * z + soft * soft);
+  }
+  return p;
+}
+function fieldAt(charges, x, y, soft) {
+  soft = soft || 0;
+  let ex = 0, ey = 0;
+  for (const c of charges) {
+    const dx = x - c.x, dy = y - c.y;
+    const r2 = dx * dx + dy * dy + soft * soft;
+    const k = c.q / (r2 * Math.sqrt(r2));
+    ex += k * dx; ey += k * dy;
+  }
+  return { ex, ey };
+}
+function potentialGrid(charges, nx, ny, xmin, xmax, ymin, ymax, soft) {
+  const g = new Float32Array(nx * ny);
+  const dx = (xmax - xmin) / (nx - 1), dy = (ymax - ymin) / (ny - 1);
+  for (let j = 0; j < ny; j++) {
+    const y = ymin + j * dy;
+    for (let i = 0; i < nx; i++) g[j * nx + i] = potentialAt(charges, xmin + i * dx, y, 0, soft);
+  }
+  return g;
+}
+/* marching squares, one level; returns flat [x1,y1,x2,y2,...] in world coordinates */
+function contourSegments(g, nx, ny, level, xmin, ymin, dx, dy) {
+  const out = [];
+  const lerp = (a, b) => { const d = b - a; return d === 0 ? 0.5 : (level - a) / d; };
+  for (let j = 0; j < ny - 1; j++) {
+    for (let i = 0; i < nx - 1; i++) {
+      const a = g[j * nx + i], b = g[j * nx + i + 1], c = g[(j + 1) * nx + i + 1], d = g[(j + 1) * nx + i];
+      const aa = a > level, bb = b > level, cc = c > level, dd = d > level;
+      if (aa === bb && bb === cc && cc === dd) continue;
+      const x0 = xmin + i * dx, y0 = ymin + j * dy;
+      const pts = [];
+      if (aa !== bb) pts.push([x0 + lerp(a, b) * dx, y0]);                 // bottom
+      if (bb !== cc) pts.push([x0 + dx, y0 + lerp(b, c) * dy]);            // right
+      if (dd !== cc) pts.push([x0 + lerp(d, c) * dx, y0 + dy]);            // top
+      if (aa !== dd) pts.push([x0, y0 + lerp(a, d) * dy]);                 // left
+      if (pts.length === 2) out.push(pts[0][0], pts[0][1], pts[1][0], pts[1][1]);
+      else if (pts.length === 4) {
+        const m = (a + b + c + d) / 4 > level;
+        if (aa === m) { out.push(pts[0][0], pts[0][1], pts[1][0], pts[1][1], pts[2][0], pts[2][1], pts[3][0], pts[3][1]); }
+        else { out.push(pts[0][0], pts[0][1], pts[3][0], pts[3][1], pts[1][0], pts[1][1], pts[2][0], pts[2][1]); }
+      }
+    }
+  }
+  return out;
+}
+/* average of the potential over a sphere of radius R centred at (px,py,0); charges lie in z = 0 */
+function sphereAverage(charges, px, py, R) {
+  const nc = 60, nf = 120; let s = 0;
+  for (let a = 0; a < nc; a++) {
+    const cz = -1 + (2 * a + 1) / nc, sz = Math.sqrt(1 - cz * cz);
+    for (let b = 0; b < nf; b++) {
+      const ph = (2 * Math.PI * (b + 0.5)) / nf;
+      s += potentialAt(charges, px + R * sz * Math.cos(ph), py + R * sz * Math.sin(ph), R * cz, 0);
+    }
+  }
+  return s / (nc * nf);
+}
+function chargesInside(charges, px, py, R) {
+  let n = 0; for (const c of charges) if (Math.hypot(c.x - px, c.y - py) < R) n++; return n;
+}
+
+/* ---- radial models: solid sphere and thin shell (SI) ---- */
+const ERRORS = {
+  none: 'None: the correct solution',
+  inv: 'Keep a 1/r term inside',
+  slope: 'Match Φ but not its slope',
+  inf: 'Ignore Φ(∞) = 0',
+  sign: 'Wrong sign in Poisson (sphere only)'
+};
+function radialModel(mode, Q, R, err) {
+  err = err || 'none';
+  const k = Q / (4 * Math.PI * EPS0);            // Q / (4 pi eps0)
+  let rho0 = 0, sigma = 0, inFn, outFn;
+  if (mode === 'sphere') {
+    rho0 = 3 * Q / (4 * Math.PI * R ** 3);
+    inFn = r => Q * (3 * R * R - r * r) / (8 * Math.PI * EPS0 * R ** 3);
+    outFn = r => k / r;
+  } else {
+    sigma = Q / (4 * Math.PI * R * R);
+    inFn = () => k / R;
+    outFn = r => k / r;
+  }
+  const phiR = k / R;
+  if (err === 'inv') {
+    const c = 0.25 * k, base = inFn;
+    inFn = r => base(r) + c / r - c / R;
+  } else if (err === 'slope') {
+    const Bw = (mode === 'sphere' ? 1.3 : 0.7) * k, base = inFn;
+    const shift = Bw / R - base(R);
+    outFn = r => Bw / r;
+    inFn = r => base(r) + shift;
+  } else if (err === 'inf') {
+    const A = 0.3 * phiR, bi = inFn, bo = outFn;
+    inFn = r => bi(r) + A; outFn = r => bo(r) + A;
+  } else if (err === 'sign' && mode === 'sphere') {
+    const a = rho0 / (6 * EPS0), C = phiR - a * R * R;
+    inFn = r => a * r * r + C;
+  }
+  return { mode, Q, R, k, rho0, sigma, phiR, err, inFn, outFn,
+    phi: r => (r < R ? inFn(r) : outFn(r)) };
+}
+function radialChecks(m) {
+  const R = m.R, h = 1e-3 * R, S = Math.abs(m.phiR) / (R * R);
+  const lap = (f, r) => (((r + h / 2) ** 2) * (f(r + h) - f(r)) / h - ((r - h / 2) ** 2) * (f(r) - f(r - h)) / h) / (r * r * h);
+  let worst = 0;
+  for (const t of [0.25, 0.5, 0.75]) worst = Math.max(worst, Math.abs(lap(m.inFn, t * R) + m.rho0 / EPS0) / S);
+  for (const t of [1.5, 2, 3]) worst = Math.max(worst, Math.abs(lap(m.outFn, t * R)) / S);
+  const pde = { ok: worst < 1e-3, value: worst };
+  const phi0 = m.inFn(1e-6 * R), phiInf = m.outFn(1e6 * R);
+  const bc = { ok: Math.abs(phi0) < 10 * Math.abs(m.phiR) && Math.abs(phiInf) < 1e-3 * Math.abs(m.phiR), phi0, phiInf };
+  const d1 = (f, r, s) => s * (-3 * f(r) + 4 * f(r + s * h) - f(r + 2 * s * h)) / (2 * h);   // one-sided, second order
+  const slopeOut = (-3 * m.outFn(R) + 4 * m.outFn(R + h) - m.outFn(R + 2 * h)) / (2 * h);
+  const slopeIn = (3 * m.inFn(R) - 4 * m.inFn(R - h) + m.inFn(R - 2 * h)) / (2 * h);
+  const jump = slopeOut - slopeIn, want = -m.sigma / EPS0, dphi = m.outFn(R) - m.inFn(R);
+  const scaleJ = Math.abs(m.phiR) / R;
+  const match = { ok: Math.abs(dphi) < 1e-9 * Math.abs(m.phiR) && Math.abs(jump - want) < 1e-4 * scaleJ, dphi, jump, want };
+  const far = m.outFn(100 * R) * 100 * R / m.k;
+  const unit = m.mode === 'sphere' ? m.phiR * EPS0 / (m.rho0 * R * R) : m.phiR * EPS0 / (m.sigma * R);
+  const lim = { ok: Math.abs(far - 1) < 1e-3, far, unit };
+  return { pde, bc, match, lim };
+}
+function plateChecks(V0, d) {
+  const f = z => V0 * z / d, h = 1e-3 * d;
+  const lap = (f(0.5 * d + h) - 2 * f(0.5 * d) + f(0.5 * d - h)) / (h * h);
+  return { pde: { ok: Math.abs(lap) < 1e-6 * V0 / (d * d) + 1e-12, value: lap },
+    bc: { ok: Math.abs(f(0)) < 1e-12 && Math.abs(f(d) - V0) < 1e-9, f0: f(0), fd: f(d) },
+    E: V0 / d, sigma: EPS0 * V0 / d };
+}
+
+/* ---- Laplace by averaging on a square grid ---- */
+class Relax {
+  constructor(N, T, B, L, Rt) {
+    this.N = N; this.n = N + 2; this.u = new Float64Array(this.n * this.n);
+    this.T = T; this.B = B; this.L = L; this.Rt = Rt; this.iter = 0; this.hist = [];
+    const n = this.n, u = this.u;
+    for (let i = 1; i <= N; i++) { u[i] = B; u[(n - 1) * n + i] = T; }      // u[j*n+i]; j = 0 bottom
+    for (let j = 1; j <= N; j++) { u[j * n] = L; u[j * n + n - 1] = Rt; }
+    u[0] = (B + L) / 2; u[n - 1] = (B + Rt) / 2; u[(n - 1) * n] = (T + L) / 2; u[(n - 1) * n + n - 1] = (T + Rt) / 2;
+  }
+  omega() { return 2 / (1 + Math.sin(Math.PI / (this.N + 1))); }
+  sweep(w) {
+    const n = this.n, u = this.u, N = this.N; let dmax = 0;
+    for (let j = 1; j <= N; j++) for (let i = 1; i <= N; i++) {
+      const k = j * n + i, avg = 0.25 * (u[k + 1] + u[k - 1] + u[k + n] + u[k - n]);
+      const nv = u[k] + w * (avg - u[k]), d = Math.abs(nv - u[k]); if (d > dmax) dmax = d; u[k] = nv;
+    }
+    this.iter++; this.hist.push(dmax); return dmax;
+  }
+  residual() {
+    const n = this.n, u = this.u, N = this.N; let r = 0;
+    for (let j = 1; j <= N; j++) for (let i = 1; i <= N; i++) {
+      const k = j * n + i; r = Math.max(r, Math.abs(u[k] - 0.25 * (u[k + 1] + u[k - 1] + u[k + n] + u[k - n])));
+    }
+    return r;
+  }
+  at(i, j) { return this.u[j * this.n + i]; }
+  centre() { const c = (this.N + 1) / 2; return this.at(c, c); }
+  probe() { const q = (this.N + 1) / 4; return this.at(q, 3 * q); }          // x = 0.25, y = 0.75
+  interiorRange() {
+    let lo = Infinity, hi = -Infinity;
+    for (let j = 1; j <= this.N; j++) for (let i = 1; i <= this.N; i++) { const v = this.at(i, j); if (v < lo) lo = v; if (v > hi) hi = v; }
+    return [lo, hi];
+  }
+  boundaryRange() { const v = [this.T, this.B, this.L, this.Rt]; return [Math.min(...v), Math.max(...v)]; }
+}
+/* independent check: Fourier series for one side at 1 V on the unit square */
+function seriesSide(x, y, terms) {
+  let s = 0;
+  for (let m = 0; m < terms; m++) {
+    const n = 2 * m + 1, a = n * Math.PI;
+    const ratio = Math.exp(a * (y - 1)) * (1 - Math.exp(-2 * a * y)) / (1 - Math.exp(-2 * a));   // sinh(a y)/sinh(a) without overflow
+    s += (4 / a) * Math.sin(a * x) * ratio;
+  }
+  return s;
+}
+function seriesSquare(x, y, T, B, L, Rt, terms) {
+  terms = terms || 200;
+  return T * seriesSide(x, y, terms) + B * seriesSide(x, 1 - y, terms) + L * seriesSide(y, 1 - x, terms) + Rt * seriesSide(y, x, terms);
+}
+
+if (typeof module !== 'undefined') module.exports = { EPS0, potentialAt, fieldAt, potentialGrid, contourSegments, sphereAverage, chargesInside, radialModel, radialChecks, plateChecks, Relax, seriesSquare, ERRORS };
+
+</script>
+<script>
+/* ===== interface ===== */
+(function () {
+'use strict';
+const $ = id => document.getElementById(id);
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const UI = () => (document.body.classList.contains('big') ? 1.22 : 1);
+const SANS = () => css('--sans') || 'sans-serif';
+const SERIF = () => css('--serif') || 'serif';
+function rgb(hex) { hex = hex.replace('#', ''); if (hex.length === 3) hex = hex.split('').map(c => c + c).join(''); return [0, 2, 4].map(i => parseInt(hex.slice(i, i + 2), 16)); }
+function sig(x, d) { return String(+x.toPrecision(d)); }
+function si(v, unit, d) {
+  d = d || 3; if (!isFinite(v)) return '∞ ' + unit; if (v === 0) return '0 ' + unit;
+  const pre = [[1e9, 'G'], [1e6, 'M'], [1e3, 'k'], [1, ''], [1e-3, 'm'], [1e-6, 'µ'], [1e-9, 'n'], [1e-12, 'p']], a = Math.abs(v);
+  for (const [s, p] of pre) if (a >= s * 0.9995) return sig(v / s, d) + ' ' + p + unit;
+  return v.toExponential(2) + ' ' + unit;
+}
+function fit(cv, aspect) {
+  const W = Math.max(240, Math.floor(cv.parentElement.clientWidth)), H = Math.round(W * aspect), d = Math.min(window.devicePixelRatio || 1, 2);
+  if (cv.width !== W * d || cv.height !== H * d) { cv.width = W * d; cv.height = H * d; }
+  cv.style.height = H + 'px';
+  const ctx = cv.getContext('2d'); ctx.setTransform(d, 0, 0, d, 0, 0); return { ctx, W, H };
+}
+function niceTicks(lo, hi, n) {
+  const span = hi - lo; if (!(span > 0)) return [lo];
+  const raw = span / n, p = Math.pow(10, Math.floor(Math.log10(raw))), f = raw / p, s = (f < 1.5 ? 1 : f < 3 ? 2 : f < 7 ? 5 : 10) * p, t = [];
+  for (let v = Math.ceil(lo / s - 1e-9) * s; v <= hi + 1e-9 * span; v += s) t.push(+v.toPrecision(12));
+  return t;
+}
+function arrow(ctx, x1, y1, x2, y2, head) {
+  const a = Math.atan2(y2 - y1, x2 - x1); ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(x2, y2); ctx.lineTo(x2 - head * Math.cos(a - 0.45), y2 - head * Math.sin(a - 0.45)); ctx.moveTo(x2, y2); ctx.lineTo(x2 - head * Math.cos(a + 0.45), y2 - head * Math.sin(a + 0.45)); ctx.stroke();
+}
+let pending = {};
+function schedule(key, fn) { if (pending[key]) return; pending[key] = requestAnimationFrame(() => { pending[key] = 0; fn(); }); }
+
+/* generic line plot */
+function plot(cv, aspect, o) {
+  const { ctx, W, H } = fit(cv, aspect), u = UI(), m = { l: 84 * u, r: 16, t: 30 * u, b: 42 * u };
+  const pw = W - m.l - m.r, ph = H - m.t - m.b, X = x => m.l + (x - o.xmin) / (o.xmax - o.xmin) * pw, Y = y => m.t + ph - (y - o.ymin) / (o.ymax - o.ymin) * ph;
+  ctx.clearRect(0, 0, W, H); ctx.fillStyle = css('--plot'); ctx.fillRect(0, 0, W, H);
+  ctx.font = `${13 * u}px ${SANS()}`; ctx.textBaseline = 'middle';
+  const line = css('--line'), muted = css('--muted'), ink = css('--ink');
+  ctx.strokeStyle = line; ctx.lineWidth = 1; ctx.fillStyle = muted;
+  ctx.textAlign = 'right';
+  for (const v of niceTicks(o.ymin, o.ymax, 4)) { const y = Y(v); ctx.beginPath(); ctx.moveTo(m.l, y); ctx.lineTo(m.l + pw, y); ctx.stroke(); ctx.fillText(o.yfmt(v), m.l - 8, y); }
+  ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+  for (const v of niceTicks(o.xmin, o.xmax, 6)) { const x = X(v); ctx.beginPath(); ctx.moveTo(x, m.t + ph); ctx.lineTo(x, m.t + ph + 4); ctx.stroke(); ctx.fillText(o.xfmt ? o.xfmt(v) : String(v), x, m.t + ph + 6); }
+  ctx.strokeStyle = muted; ctx.beginPath(); ctx.moveTo(m.l, m.t); ctx.lineTo(m.l, m.t + ph); ctx.lineTo(m.l + pw, m.t + ph); ctx.stroke();
+  ctx.fillStyle = ink; ctx.textAlign = 'left'; ctx.textBaseline = 'top'; ctx.font = `600 ${14 * u}px ${SANS()}`; ctx.fillText(o.title, m.l, 6);
+  ctx.fillStyle = muted; ctx.font = `${13 * u}px ${SANS()}`; ctx.textAlign = 'right'; ctx.fillText(o.xlabel, m.l + pw, H - 18 * u);
+  ctx.save(); ctx.beginPath(); ctx.rect(m.l, m.t, pw, ph); ctx.clip();
+  for (const v of o.vlines || []) { ctx.strokeStyle = v.color; ctx.setLineDash([5, 4]); ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(X(v.x), m.t); ctx.lineTo(X(v.x), m.t + ph); ctx.stroke(); ctx.setLineDash([]); }
+  for (const s of o.series) {
+    ctx.strokeStyle = s.color; ctx.lineWidth = (s.w || 2.5) * Math.min(u, 1.2); ctx.lineJoin = 'round'; ctx.beginPath(); let pen = false;
+    for (const [x, y] of s.pts) { if (!isFinite(y)) { pen = false; continue; } const px = X(x), py = Y(y); if (!pen) { ctx.moveTo(px, py); pen = true; } else ctx.lineTo(px, py); }
+    ctx.stroke();
+  }
+  ctx.restore();
+  for (const v of o.vlines || []) if (v.label) { ctx.fillStyle = v.color; ctx.font = `600 ${13 * u}px ${SANS()}`; ctx.textAlign = 'left'; ctx.textBaseline = 'top'; ctx.fillText(v.label, X(v.x) + 5, m.t + 4); }
+  if (o.dot && isFinite(o.dot.y)) { ctx.fillStyle = o.dot.color; ctx.strokeStyle = css('--plot'); ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(X(o.dot.x), Y(o.dot.y), 5.5 * Math.min(u, 1.2), 0, 7); ctx.fill(); ctx.stroke(); }
+}
+
+/* diverging colour map: negative teal, positive amber, zero = plot background */
+function mixColor(bg, hue, a) { return [bg[0] + (hue[0] - bg[0]) * a, bg[1] + (hue[1] - bg[1]) * a, bg[2] + (hue[2] - bg[2]) * a]; }
+
+/* ========================================================= A: charges ========================================================= */
+const X0 = -4, X1 = 4, Y0 = -2.5, Y1 = 2.5, NX = 161, NY = 101, SOFT = 0.06, DXg = (X1 - X0) / (NX - 1), DYg = (Y1 - Y0) / (NY - 1);
+const PRESETS = {
+  single: [{ x: 0, y: 0, q: 2 }],
+  dipole: [{ x: -1.2, y: 0, q: 2 }, { x: 1.2, y: 0, q: -2 }],
+  like: [{ x: -1.2, y: 0, q: 2 }, { x: 1.2, y: 0, q: 2 }],
+  quad: [{ x: -1.1, y: 0.9, q: 2 }, { x: 1.1, y: 0.9, q: -2 }, { x: -1.1, y: -0.9, q: -2 }, { x: 1.1, y: -0.9, q: 2 }]
+};
+const A = { ch: JSON.parse(JSON.stringify(PRESETS.dipole)), sel: 0, probe: { x: 0.8, y: 1.15 }, spacing: 0.5, heat: true, lines: true, arrows: true, follow: true, rs: 1, drag: -1, grid: null, off: document.createElement('canvas') };
+A.off.width = NX; A.off.height = NY;
+function regridA() { A.grid = potentialGrid(A.ch, NX, NY, X0, X1, Y0, Y1, SOFT); }
+function chipsA() {
+  const box = $('chips'); box.innerHTML = '';
+  A.ch.forEach((c, i) => { const b = document.createElement('button'); b.className = 'chip'; b.textContent = (i + 1) + ': ' + (c.q > 0 ? '+' : c.q < 0 ? '−' : '') + Math.abs(c.q); b.setAttribute('aria-pressed', i === A.sel ? 'true' : 'false'); b.onclick = () => { A.sel = i; syncA(); }; box.appendChild(b); });
+  if (!A.ch.length) box.textContent = 'No charges. Add one below.';
+}
+function syncA() {
+  chipsA(); const c = A.ch[A.sel]; const s = $('qA'); s.disabled = !c; if (c) s.value = c.q; $('qAo').textContent = c ? (c.q > 0 ? '+' : c.q < 0 ? '−' : '') + Math.abs(c.q) : '–';
+  $('spAo').textContent = A.spacing; $('rsAo').textContent = A.rs.toFixed(1); drawA();
+}
+function worldA(e) { const r = $('cA').getBoundingClientRect(); return { x: X0 + (e.clientX - r.left) / r.width * (X1 - X0), y: Y1 - (e.clientY - r.top) / r.height * (Y1 - Y0) }; }
+function drawA() {
+  const cv = $('cA'), { ctx, W, H } = fit(cv, (Y1 - Y0) / (X1 - X0)), u = UI(); regridA();
+  const sx = x => (x - X0) / (X1 - X0) * W, sy = y => H - (y - Y0) / (Y1 - Y0) * H;
+  const bg = rgb(css('--plot')), amber = rgb(css('--amber')), teal = rgb(css('--teal'));
+  ctx.fillStyle = css('--plot'); ctx.fillRect(0, 0, W, H);
+  if (A.heat) {
+    const octx = A.off.getContext('2d'), img = octx.createImageData(NX, NY);
+    for (let j = 0; j < NY; j++) for (let i = 0; i < NX; i++) {
+      const v = A.grid[j * NX + i], t = Math.tanh(v / 4), c = mixColor(bg, t >= 0 ? amber : teal, 0.72 * Math.abs(t)), k = ((NY - 1 - j) * NX + i) * 4;
+      img.data[k] = c[0]; img.data[k + 1] = c[1]; img.data[k + 2] = c[2]; img.data[k + 3] = 255;
+    }
+    octx.putImageData(img, 0, 0); ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high'; ctx.drawImage(A.off, 0, 0, W, H);
+  }
+  const seg = (s, w, col, dash, alpha) => {
+    ctx.strokeStyle = col; ctx.lineWidth = w; ctx.globalAlpha = alpha || 1; ctx.setLineDash(dash || []); ctx.beginPath();
+    for (let i = 0; i < s.length; i += 4) { ctx.moveTo(sx(s[i]), sy(s[i + 1])); ctx.lineTo(sx(s[i + 2]), sy(s[i + 3])); }
+    ctx.stroke(); ctx.setLineDash([]); ctx.globalAlpha = 1;
+  };
+  if (A.lines) {
+    const K = Math.floor(8 / A.spacing);
+    for (let k = -K; k <= K; k++) { const lev = k * A.spacing, s = contourSegments(A.grid, NX, NY, lev, X0, Y0, DXg, DYg);
+      if (k === 0) seg(s, 1.4, css('--muted'), [6, 4], 0.9); else seg(s, 1.1, k > 0 ? css('--amber') : css('--teal'), null, 0.8); }
+  }
+  if (A.arrows) {
+    const AX = W < 520 ? 16 : 24, AY = Math.round(AX * 0.625); ctx.lineWidth = 1.3; ctx.strokeStyle = css('--ink');
+    for (let j = 0; j < AY; j++) for (let i = 0; i < AX; i++) {
+      const x = X0 + (i + 0.5) * (X1 - X0) / AX, y = Y0 + (j + 0.5) * (Y1 - Y0) / AY;
+      if (A.ch.some(c => Math.hypot(c.x - x, c.y - y) < 0.3)) continue;
+      const f = fieldAt(A.ch, x, y, SOFT), mag = Math.hypot(f.ex, f.ey); if (mag < 1e-9) continue;
+      ctx.globalAlpha = Math.min(1, 0.18 + 0.82 * Math.tanh(mag / 0.6)); const L = 0.4 * W / AX, ux = f.ex / mag, uy = -f.ey / mag, px = sx(x), py = sy(y);
+      arrow(ctx, px - ux * L * 0.5, py - uy * L * 0.5, px + ux * L * 0.5, py + uy * L * 0.5, 4 * u);
+    }
+    ctx.globalAlpha = 1;
+  }
+  const p = A.probe, pphi = potentialAt(A.ch, p.x, p.y, 0, SOFT), pf = fieldAt(A.ch, p.x, p.y, SOFT), pm = Math.hypot(pf.ex, pf.ey);
+  seg(contourSegments(A.grid, NX, NY, pphi, X0, Y0, DXg, DYg), 3.2 * Math.min(u, 1.3), css('--ink'), null, 0.95);
+  // averaging sphere, drawn as its cross-section in the plane
+  ctx.strokeStyle = css('--green'); ctx.lineWidth = 2; ctx.setLineDash([7, 5]); ctx.beginPath(); ctx.ellipse(sx(p.x), sy(p.y), A.rs / (X1 - X0) * W, A.rs / (Y1 - Y0) * H, 0, 0, 7); ctx.stroke(); ctx.setLineDash([]);
+  if (pm > 1e-9) { ctx.strokeStyle = css('--brick'); ctx.lineWidth = 3.2; const L = 82 * u; arrow(ctx, sx(p.x), sy(p.y), sx(p.x) + pf.ex / pm * L, sy(p.y) - pf.ey / pm * L, 11 * u); }
+  ctx.fillStyle = css('--ink'); ctx.strokeStyle = css('--plot'); ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(sx(p.x), sy(p.y), 5.5 * u, 0, 7); ctx.fill(); ctx.stroke();
+  A.ch.forEach((c, i) => {
+    const r = (11 + 2.6 * Math.abs(c.q)) * Math.min(u, 1.2), col = c.q > 0 ? css('--amber') : c.q < 0 ? css('--teal') : css('--muted');
+    ctx.fillStyle = col; ctx.beginPath(); ctx.arc(sx(c.x), sy(c.y), r, 0, 7); ctx.fill();
+    ctx.lineWidth = i === A.sel ? 3 : 1.5; ctx.strokeStyle = i === A.sel ? css('--ink') : css('--plot'); ctx.stroke();
+    ctx.fillStyle = '#fff'; ctx.font = `700 ${r * 1.15}px ${SANS()}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(c.q > 0 ? '+' : c.q < 0 ? '−' : '0', sx(c.x), sy(c.y) + 1);
+  });
+  $('rPhi').textContent = sig(pphi, 4); $('rE').textContent = sig(pm, 4); $('rAng').textContent = pm > 1e-9 ? Math.round(Math.atan2(pf.ey, pf.ex) * 180 / Math.PI) + '°' : '–';
+  const cphi = potentialAt(A.ch, p.x, p.y, 0, 0), avg = sphereAverage(A.ch, p.x, p.y, A.rs), n = chargesInside(A.ch, p.x, p.y, A.rs);
+  $('mvC').textContent = sig(cphi, 5); $('mvA').textContent = sig(avg, 5); $('mvN').textContent = n;
+  $('mvNote').textContent = n === 0 ? 'They agree: no charge lies inside, so ∇²Φ = 0 throughout the sphere.' : 'They differ: a charge lies inside the sphere, so Laplace\'s equation fails there.';
+}
+function initA() {
+  const cv = $('cA');
+  cv.addEventListener('pointerdown', e => {
+    const w = worldA(e); let best = -1, bd = 0.4;
+    A.ch.forEach((c, i) => { const d = Math.hypot(c.x - w.x, c.y - w.y); if (d < bd) { bd = d; best = i; } });
+    if (best >= 0) { A.drag = best; A.sel = best; cv.setPointerCapture(e.pointerId); chipsA(); $('qA').value = A.ch[best].q; $('qAo').textContent = (A.ch[best].q > 0 ? '+' : '−') + Math.abs(A.ch[best].q); } else A.probe = { x: w.x, y: w.y };
+    schedule('A', drawA);
+  });
+  cv.addEventListener('pointermove', e => {
+    const w = worldA(e);
+    if (A.drag >= 0) { A.ch[A.drag].x = Math.max(X0 + 0.1, Math.min(X1 - 0.1, w.x)); A.ch[A.drag].y = Math.max(Y0 + 0.1, Math.min(Y1 - 0.1, w.y)); }
+    else if (A.follow && (e.pointerType === 'mouse' || e.buttons)) A.probe = { x: w.x, y: w.y }; else return;
+    schedule('A', drawA);
+  });
+  const up = () => { A.drag = -1; }; cv.addEventListener('pointerup', up); cv.addEventListener('pointercancel', up);
+  cv.addEventListener('keydown', e => {
+    const c = A.ch[A.sel]; if (!c) return; const st = e.shiftKey ? 0.5 : 0.1; let h = true;
+    if (e.key === 'ArrowLeft') c.x = Math.max(X0 + 0.1, c.x - st); else if (e.key === 'ArrowRight') c.x = Math.min(X1 - 0.1, c.x + st);
+    else if (e.key === 'ArrowUp') c.y = Math.min(Y1 - 0.1, c.y + st); else if (e.key === 'ArrowDown') c.y = Math.max(Y0 + 0.1, c.y - st); else h = false;
+    if (h) { e.preventDefault(); schedule('A', drawA); }
+  });
+  $('presets').querySelectorAll('button').forEach(b => b.onclick = () => {
+    A.ch = JSON.parse(JSON.stringify(PRESETS[b.dataset.p])); A.sel = 0;
+    $('presets').querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', x === b ? 'true' : 'false')); syncA();
+  });
+  const touched = () => $('presets').querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', 'false'));
+  $('qA').oninput = e => { if (A.ch[A.sel]) { A.ch[A.sel].q = +e.target.value; touched(); syncA(); } };
+  const add = q => { if (A.ch.length >= 8) return; const k = A.ch.length; A.ch.push({ x: -2.6 + 0.9 * (k % 6), y: 1.7 - 0.7 * Math.floor(k / 6) * 2, q }); A.sel = A.ch.length - 1; touched(); syncA(); };
+  $('addP').onclick = () => add(2); $('addN').onclick = () => add(-2);
+  $('delC').onclick = () => { if (A.ch.length) { A.ch.splice(A.sel, 1); A.sel = Math.max(0, Math.min(A.sel, A.ch.length - 1)); touched(); syncA(); } };
+  $('shHeat').onchange = e => { A.heat = e.target.checked; drawA(); }; $('shLines').onchange = e => { A.lines = e.target.checked; drawA(); };
+  $('shArrows').onchange = e => { A.arrows = e.target.checked; drawA(); }; $('follow').onchange = e => { A.follow = e.target.checked; };
+  $('spA').oninput = e => { A.spacing = +e.target.value; $('spAo').textContent = A.spacing; drawA(); };
+  $('rsA').oninput = e => { A.rs = +e.target.value; $('rsAo').textContent = A.rs.toFixed(1); drawA(); };
+  syncA();
+}
+
+/* ========================================================= B: solve and check ========================================================= */
+const Bst = { mode: 'sphere', sign: 1, Q: 10, R: 5, V0: 10, d: 5, pos: 0.5, err: 'none', showF: false };
+function modelB() { return radialModel(Bst.mode, Bst.sign * Bst.Q * 1e-9, Bst.R * 1e-2, Bst.err); }
+function ddr(f, r, lo, hi) {
+  const h = 1e-5 * (hi - lo);
+  if (r - h < lo) return (-3 * f(r) + 4 * f(r + h) - f(r + 2 * h)) / (2 * h);
+  if (r + h > hi) return (3 * f(r) - 4 * f(r - h) + f(r - 2 * h)) / (2 * h);
+  return (f(r + h) - f(r - h)) / (2 * h);
+}
+function snap(v, tol, unit) { return Math.abs(v) < tol ? '0 ' + unit : si(v, unit, 4); }
+function checksHTML(items) {
+  $('checksB').innerHTML = items.map(it => `<li class="${it.s}"><span class="mark" aria-hidden="true">${it.s === 'pass' ? '✓' : it.s === 'fail' ? '✗' : '–'}</span><div><b>${it.t}<span class="sr"> ${it.s === 'pass' ? 'passes' : it.s === 'fail' ? 'fails' : 'not applicable'}</span></b><span>${it.d}</span></div></li>`).join('');
+}
+function drawB() {
+  const u = UI();
+  $('ctlRad').classList.toggle('hidden', Bst.mode === 'plates'); $('ctlPl').classList.toggle('hidden', Bst.mode !== 'plates'); $('errSec').classList.toggle('hidden', Bst.mode === 'plates');
+  $('showFWrap').classList.toggle('hidden', Bst.mode !== 'shell'); $('shellNote').classList.toggle('hidden', Bst.mode !== 'shell'); $('modeB').querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', b.dataset.m === Bst.mode ? 'true' : 'false'));
+  $('signB').querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', +b.dataset.s === Bst.sign ? 'true' : 'false'));
+  $('qBo').textContent = (Bst.sign > 0 ? '+' : '−') + Bst.Q + ' nC'; $('rBo').textContent = Bst.R + ' cm'; $('vBo').textContent = Bst.V0 + ' V'; $('dBo').textContent = Bst.d + ' mm';
+  const teal = css('--teal'), amber = css('--amber'), brick = css('--brick');
+  if (Bst.mode === 'plates') {
+    const V0 = Bst.V0, d = Bst.d * 1e-3, pc = plateChecks(V0, d), z = Bst.pos * d, E = V0 / d;
+    $('pBl').textContent = 'Position z / d'; $('pBo').textContent = Bst.pos.toFixed(2);
+    plot($('cB1'), 0.4, { title: 'Φ(z)', xlabel: 'z (mm)', xmin: 0, xmax: Bst.d, ymin: 0, ymax: V0 * 1.1, yfmt: v => sig(v, 3) + ' V', xfmt: v => sig(v, 3), series: [{ pts: [[0, 0], [Bst.d, V0]], color: teal }], vlines: [{ x: 0, color: css('--muted') }, { x: Bst.d, color: css('--muted') }], dot: { x: z * 1e3, y: V0 * Bst.pos, color: amber } });
+    plot($('cB2'), 0.4, { title: 'E(z), pointing from the high plate to the low plate', xlabel: 'z (mm)', xmin: 0, xmax: Bst.d, ymin: -1.4 * E, ymax: 0, yfmt: v => si(v, 'V/m', 2), xfmt: v => sig(v, 3), series: [{ pts: [[0, -E], [Bst.d, -E]], color: amber }], dot: { x: z * 1e3, y: -E, color: teal } });
+    $('legB').innerHTML = '<span><i style="border-color:var(--teal)"></i>Φ</span><span><i style="border-color:var(--amber)"></i>E<sub>z</sub> = −dΦ/dz</span>';
+    $('bReg').textContent = 'Gap: ρ = 0, Laplace'; $('bPhi').textContent = si(V0 * Bst.pos, 'V'); $('bE').textContent = si(E, 'V/m') + ' toward −z'; $('bRho').textContent = '0';
+    checksHTML([
+      { s: pc.pde.ok ? 'pass' : 'fail', t: 'PDE', d: 'd²Φ/dz² = ' + pc.pde.value.toExponential(1) + ' V/m², and it should be 0 in the gap' },
+      { s: pc.bc.ok ? 'pass' : 'fail', t: 'Boundary conditions', d: 'Φ(0) = ' + si(pc.bc.f0, 'V') + ', Φ(d) = ' + si(pc.bc.fd, 'V') },
+      { s: 'na', t: 'Matching', d: 'One region only, so nothing to match' },
+      { s: 'pass', t: 'Dimensions and limits', d: 'E = V₀/d = ' + si(pc.E, 'V/m') + '; plate charge σ = ε₀E = ' + si(pc.sigma, 'C/m²') }
+    ]);
+    $('formB').innerHTML = 'Φ(z) = V<sub>0</sub>z / d<br>E = −(V<sub>0</sub> / d) ẑ<br>σ = ±ε<sub>0</sub>V<sub>0</sub> / d';
+    $('errNote').textContent = '';
+    return;
+  }
+  const m = modelB(), ref = radialModel(Bst.mode, Bst.sign * Bst.Q * 1e-9, Bst.R * 1e-2, 'none'), R = m.R, q = Bst.sign;
+  $('pBl').textContent = 'Position r / R'; $('pBo').textContent = Bst.pos.toFixed(2); const r = Bst.pos * R;
+  const NP = 220, pin = [], pout = [], ein = [], eout = [];
+  for (let i = 0; i < NP; i++) {
+    const a = R * (2e-3 + (1 - 2e-3 - 1e-9) * i / (NP - 1)), b = R * (1 + 1e-9 + 2 * i / (NP - 1));
+    pin.push([a * 100, m.inFn(a)]); pout.push([b * 100, m.outFn(b)]);
+    ein.push([a * 100, -ddr(m.inFn, a, 0, R)]); eout.push([b * 100, -ddr(m.outFn, b, R, 3 * R)]);
+  }
+  const phiTop = (Bst.mode === 'sphere' ? 1.5 : 1) * ref.phiR * 1.12, Etop = Math.abs(ref.k) / (R * R) * 1.3;
+  const inCol = Bst.mode === 'sphere' ? amber : teal, xf = v => sig(v, 3);
+  plot($('cB1'), 0.4, { title: 'Φ(r)', xlabel: 'r (cm)', xmin: 0, xmax: 3 * R * 100, ymin: Math.min(0, phiTop), ymax: Math.max(0, phiTop), yfmt: v => si(v, 'V', 3), xfmt: xf, series: [{ pts: pin, color: inCol }, { pts: pout, color: teal }], vlines: [{ x: R * 100, color: css('--muted'), label: 'R' }], dot: { x: r * 100, y: r < R ? m.inFn(Math.max(r, 1e-6 * R)) : m.outFn(r), color: brick } });
+  plot($('cB2'), 0.4, { title: 'E(r) = −dΦ/dr', xlabel: 'r (cm)', xmin: 0, xmax: 3 * R * 100, ymin: Math.min(0, q * Etop), ymax: Math.max(0, q * Etop), yfmt: v => si(v, 'V/m', 3), xfmt: xf, series: [{ pts: ein, color: inCol }, { pts: eout, color: teal }], vlines: [{ x: R * 100, color: css('--muted'), label: 'R' }], dot: { x: r * 100, y: -(r < R ? ddr(m.inFn, Math.max(r, 1e-5 * R), 0, R) : ddr(m.outFn, r, R, 3 * R)), color: brick } });
+  $('legB').innerHTML = Bst.mode === 'sphere' ? '<span><i style="border-color:var(--amber)"></i>Inside: Poisson, ρ = ρ₀</span><span><i style="border-color:var(--teal)"></i>Outside: Laplace</span>' : '<span><i style="border-color:var(--teal)"></i>Inside and outside: Laplace, with surface charge at R</span>';
+  const inside = r < R, rr = Math.max(r, 1e-6 * R), Er = -(inside ? ddr(m.inFn, rr, 0, R) : ddr(m.outFn, r, R, 3 * R));
+  $('bReg').textContent = inside ? (Bst.mode === 'sphere' ? 'Inside: Poisson' : 'Inside: Laplace') : 'Outside: Laplace';
+  $('bPhi').textContent = si(inside ? m.inFn(rr) : m.outFn(r), 'V'); $('bE').textContent = si(Er, 'V/m') + (Er >= 0 ? ' outward' : ' inward'); $('bRho').textContent = inside && Bst.mode === 'sphere' ? si(m.rho0, 'C/m³') : '0';
+  const c = radialChecks(m), what = Bst.mode === 'sphere' ? 'ρ₀R²/ε₀' : 'σR/ε₀';
+  checksHTML([
+    { s: c.pde.ok ? 'pass' : 'fail', t: 'PDE', d: 'Worst residual of ∇²Φ + ρ/ε₀: ' + c.pde.value.toExponential(1) + ' of Φ(R)/R²' },
+    { s: c.bc.ok ? 'pass' : 'fail', t: 'Boundary conditions', d: 'Φ near r = 0: ' + si(c.bc.phi0, 'V', 3) + '. Φ at 10⁶R: ' + si(c.bc.phiInf, 'V', 3) },
+    { s: c.match.ok ? 'pass' : 'fail', t: 'Matching at R', d: 'Φ jump: ' + snap(c.match.dphi, ref.phiR * 1e-9, 'V') + '. Slope jump: ' + snap(c.match.jump, Math.abs(ref.phiR) / R * 1e-4, 'V/m') + ', expected ' + snap(c.match.want, Math.abs(ref.phiR) / R * 1e-4, 'V/m') },
+    { s: c.lim.ok ? 'pass' : 'fail', t: 'Dimensions and limits', d: 'Far field × r ÷ (Q/4πε₀) = ' + sig(c.lim.far, 5) + '. Φ(R) ÷ (' + what + ') = ' + sig(c.lim.unit, 4) }
+  ]);
+  const notes = { none: 'Pick a mistake and watch which check turns red.', inv: 'This adds a point charge at the origin, so Φ is not finite at r = 0, and the slope at R no longer matches.', slope: 'Φ is continuous at R, but the outside coefficient is wrong, so the slope no longer matches what Gauss\'s law requires.', inf: 'This adds the same constant everywhere, so Φ does not go to zero at infinity.', sign: 'This flips the sign of the source term, so the curvature of Φ inside is reversed.' };
+  $('errNote').textContent = notes[Bst.err];
+  const k = ref.k, sg = Bst.sign > 0 ? '' : '−';
+  if (Bst.mode === 'sphere') $('formB').innerHTML = `Φ<sub>in</sub> = ρ<sub>0</sub>(3R² − r²) / (6ε<sub>0</sub>)<br>Φ<sub>out</sub> = ρ<sub>0</sub>R³ / (3ε<sub>0</sub>r) = Q / (4πε<sub>0</sub>r)<br>ρ<sub>0</sub> = 3Q / (4πR³) = ${si(ref.rho0, 'C/m³', 3)}`;
+  else $('formB').innerHTML = Bst.showF ? `Φ<sub>in</sub> = σR / ε<sub>0</sub><br>Φ<sub>out</sub> = σR² / (ε<sub>0</sub>r)<br>σ = Q / (4πR²) = ${si(ref.sigma, 'C/m²', 3)}` : '<span class="note">Hidden so you can try the group problem first. Tick the box below to compare.</span>';
+}
+function initB() {
+  $('modeB').querySelectorAll('button').forEach(b => b.onclick = () => { Bst.mode = b.dataset.m; if (Bst.mode === 'plates') { $('pB').max = 1; $('pB').step = 0.02; Bst.pos = 0.5; } else { $('pB').max = 3; $('pB').step = 0.05; Bst.pos = 0.5; if (Bst.mode === 'shell' && Bst.err === 'sign') { Bst.err = 'none'; } } $('pB').value = Bst.pos; buildErr(); drawB(); });
+  $('signB').querySelectorAll('button').forEach(b => b.onclick = () => { Bst.sign = +b.dataset.s; drawB(); });
+  const bind = (id, key) => $(id).oninput = e => { Bst[key] = +e.target.value; drawB(); };
+  bind('qB', 'Q'); bind('rB', 'R'); bind('vB', 'V0'); bind('dB', 'd'); bind('pB', 'pos');
+  $('showF').onchange = e => { Bst.showF = e.target.checked; drawB(); };
+  $('errB').onchange = e => { Bst.err = e.target.value; drawB(); };
+  buildErr(); drawB();
+}
+function buildErr() {
+  const s = $('errB'); s.innerHTML = '';
+  for (const k of Object.keys(ERRORS)) { if (k === 'sign' && Bst.mode !== 'sphere') continue; const o = document.createElement('option'); o.value = k; o.textContent = ERRORS[k]; s.appendChild(o); }
+  s.value = Bst.err;
+}
+
+/* ========================================================= C: relaxation ========================================================= */
+const Cst = { N: 31, T: 10, B: 0, L: 0, R: 0, sor: true, speed: 4, running: false, rel: null };
+function newRelax() { Cst.rel = new Relax(Cst.N, Cst.T, Cst.B, Cst.L, Cst.R); Cst.running = false; $('runC').textContent = 'Run'; $('tabC').innerHTML = ''; }
+function drawC() {
+  const r = Cst.rel, n = r.n, u = UI(), { ctx, W, H } = fit($('cC1'), 1), pad = 38 * u, S = W - 2 * pad, vmax = Math.max(1, Math.abs(Cst.T), Math.abs(Cst.B), Math.abs(Cst.L), Math.abs(Cst.R));
+  ctx.fillStyle = css('--plot'); ctx.fillRect(0, 0, W, H);
+  const off = document.createElement('canvas'); off.width = n; off.height = n; const octx = off.getContext('2d'), img = octx.createImageData(n, n), bg = rgb(css('--plot')), amber = rgb(css('--amber')), teal = rgb(css('--teal'));
+  for (let j = 0; j < n; j++) for (let i = 0; i < n; i++) { const t = r.u[j * n + i] / vmax, c = mixColor(bg, t >= 0 ? amber : teal, 0.85 * Math.min(1, Math.abs(t))), k = ((n - 1 - j) * n + i) * 4; img.data[k] = c[0]; img.data[k + 1] = c[1]; img.data[k + 2] = c[2]; img.data[k + 3] = 255; }
+  octx.putImageData(img, 0, 0); ctx.imageSmoothingEnabled = true; ctx.drawImage(off, pad, pad, S, S);
+  const lo = Math.min(Cst.T, Cst.B, Cst.L, Cst.R), hi = Math.max(Cst.T, Cst.B, Cst.L, Cst.R), levels = hi > lo ? niceTicks(lo, hi, 10).filter(v => v > lo + 1e-9 && v < hi - 1e-9) : [], dx = 1 / (n - 1);
+  ctx.lineWidth = 1.2; ctx.globalAlpha = 0.85;
+  for (const lev of levels) {
+    const s = contourSegments(r.u, n, n, lev, 0, 0, dx, dx); ctx.strokeStyle = lev > 0 ? css('--amber') : lev < 0 ? css('--teal') : css('--muted'); ctx.setLineDash(lev === 0 ? [6, 4] : []); ctx.beginPath();
+    for (let i = 0; i < s.length; i += 4) { ctx.moveTo(pad + s[i] * S, pad + (1 - s[i + 1]) * S); ctx.lineTo(pad + s[i + 2] * S, pad + (1 - s[i + 3]) * S); } ctx.stroke(); ctx.setLineDash([]);
+  }
+  ctx.globalAlpha = 1; ctx.strokeStyle = css('--ink'); ctx.lineWidth = 1.5; ctx.strokeRect(pad, pad, S, S);
+  ctx.fillStyle = css('--ink'); ctx.font = `600 ${14 * u}px ${SANS()}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillText('Top ' + Cst.T + ' V', W / 2, pad / 2); ctx.fillText('Bottom ' + Cst.B + ' V', W / 2, H - pad / 2);
+  ctx.save(); ctx.translate(pad / 2, H / 2); ctx.rotate(-Math.PI / 2); ctx.fillText('Left ' + Cst.L + ' V', 0, 0); ctx.restore();
+  ctx.save(); ctx.translate(W - pad / 2, H / 2); ctx.rotate(Math.PI / 2); ctx.fillText('Right ' + Cst.R + ' V', 0, 0); ctx.restore();
+  const pq = (Cst.N + 1) / 4; ctx.fillStyle = css('--ink'); ctx.strokeStyle = css('--plot'); ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(pad + 0.25 * S, pad + (1 - 0.75) * S, 5.5 * u, 0, 7); ctx.fill(); ctx.stroke();
+  ctx.font = `${12 * u}px ${SANS()}`; ctx.textAlign = 'left'; ctx.fillStyle = css('--ink'); ctx.fillText('probe', pad + 0.25 * S + 9, pad + 0.25 * S);
+  // residual history, log scale
+  const h = r.hist, step = Math.max(1, Math.floor(h.length / 500)), pts = []; for (let i = 0; i < h.length; i += step) pts.push([i + 1, Math.log10(Math.max(h[i], 1e-14))]);
+  plot($('cC2'), 0.5, { title: 'Largest change per sweep', xlabel: 'sweeps', xmin: 0, xmax: Math.max(20, h.length), ymin: -12, ymax: 1, yfmt: v => '1e' + v, xfmt: v => String(v), series: [{ pts, color: css('--teal'), w: 2 }] });
+  const res = r.residual(), ir = r.interiorRange(), br = r.boundaryRange(), mean = (Cst.T + Cst.B + Cst.L + Cst.R) / 4;
+  $('cIt').textContent = r.iter; $('cRes').textContent = r.iter ? res.toExponential(1) + ' V' : '–'; $('cPr').textContent = sig(r.probe(), 5) + ' V'; $('cCe').textContent = sig(r.centre(), 5) + ' V'; $('cMean').textContent = sig(mean, 5) + ' V';
+  $('cInt').textContent = '[' + sig(ir[0], 4) + ', ' + sig(ir[1], 4) + '] V'; $('cBnd').textContent = '[' + br[0] + ', ' + br[1] + '] V';
+  const inside = ir[0] >= br[0] - 1e-9 && ir[1] <= br[1] + 1e-9;
+  $('cNote').textContent = (inside ? 'No interior value lies outside the boundary range, as the maximum principle requires.' : 'An interior value lies outside the boundary range. That cannot happen for a solution of Laplace\'s equation.') + (res < 1e-8 ? ' Converged: the centre equals the mean of the four sides, by symmetry.' : '');
+  Cst.rel.u.length;
+}
+function loopC() {
+  if (!Cst.running) return; const w = Cst.sor ? Cst.rel.omega() : 1; let d = 1;
+  for (let k = 0; k < Cst.speed; k++) { d = Cst.rel.sweep(w); }
+  drawC(); if (d < 1e-10) { Cst.running = false; $('runC').textContent = 'Run'; } else requestAnimationFrame(loopC);
+}
+function fillTable() {
+  const rows = []; let prev = null;
+  for (const N of [15, 31, 63]) {
+    const r = new Relax(N, Cst.T, Cst.B, Cst.L, Cst.R), w = r.omega(); let d = 1, k = 0; while (d > 1e-11 && k < 20000) { d = r.sweep(w); k++; }
+    const v = r.probe(); rows.push(`<tr><td>h = 1/${N + 1}</td><td>${v.toFixed(5)} V</td><td>${prev === null ? '–' : (v - prev >= 0 ? '+' : '−') + Math.abs(v - prev).toFixed(5)}</td></tr>`); prev = v;
+  }
+  rows.push(`<tr><td>Exact series</td><td>${seriesSquare(0.25, 0.75, Cst.T, Cst.B, Cst.L, Cst.R, 200).toFixed(5)} V</td><td></td></tr>`); $('tabC').innerHTML = rows.join('');
+}
+function initC() {
+  const sl = (id, key, out) => { $(id).oninput = e => { Cst[key] = +e.target.value; $(out).textContent = Cst[key] + ' V'; newRelax(); drawC(); }; $(out).textContent = Cst[key] + ' V'; };
+  sl('vT', 'T', 'vTo'); sl('vBt', 'B', 'vBto'); sl('vL', 'L', 'vLo'); sl('vR', 'R', 'vRo');
+  $('gridC').querySelectorAll('button').forEach(b => b.onclick = () => { Cst.N = +b.dataset.n; $('gridC').querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', x === b ? 'true' : 'false')); newRelax(); drawC(); });
+  $('sor').onchange = e => { Cst.sor = e.target.checked; };
+  $('spC').oninput = e => { Cst.speed = +e.target.value; $('spCo').textContent = Cst.speed; }; $('spCo').textContent = Cst.speed;
+  $('runC').onclick = () => { Cst.running = !Cst.running; $('runC').textContent = Cst.running ? 'Pause' : 'Run'; if (Cst.running) requestAnimationFrame(loopC); };
+  $('stepC').onclick = () => { Cst.running = false; $('runC').textContent = 'Run'; Cst.rel.sweep(Cst.sor ? Cst.rel.omega() : 1); drawC(); };
+  $('resetC').onclick = () => { newRelax(); drawC(); };
+  $('fillT').onclick = fillTable;
+  newRelax();
+}
+
+/* ========================================================= D: quiz ========================================================= */
+const QUIZ = [
+  { q: 'In electrostatics ∇×E = 0. What does Stokes\'s theorem then say about the integral of E·dl around any closed loop?', o: ['It is zero', 'It equals the enclosed charge divided by ε₀', 'It equals the area of the loop times B', 'It depends on the shape of the loop'], a: 0, w: 'Stokes\'s theorem turns the loop integral into the surface integral of ∇×E, which is zero. That is why the work between two points does not depend on the path, and why a potential exists.' },
+  { q: 'At a point in the gap of a charged parallel-plate capacitor, ρ = 0. Which statement is correct?', o: ['∇²Φ = 0, and E can still be nonzero', 'E must be zero', 'Φ must be zero', 'Poisson\'s equation fails, so Φ is undetermined'], a: 0, w: 'ρ = 0 only says ∇·E = 0. The plates and their voltages set the field, and Laplace\'s equation holds in the gap.' },
+  { q: 'Where does the minus sign in ∇²Φ = −ρ/ε₀ come from?', o: ['From E = −∇Φ combined with ∇·E = ρ/ε₀', 'From the sign of the electron charge', 'From the choice Φ(∞) = 0', 'From Stokes\'s theorem'], a: 0, w: 'Substituting E = −∇Φ into ∇·E = ρ/ε₀ gives ∇·(−∇Φ) = ρ/ε₀, which is ∇²Φ = −ρ/ε₀.' },
+  { q: 'Which boundary data fix Φ only up to an additive constant?', o: ['Neumann data on the whole boundary', 'Dirichlet data on the whole boundary', 'Dirichlet data on part of the boundary', 'Any kind of boundary data'], a: 0, w: 'Adding a constant to Φ changes neither the equation nor ∂Φ/∂n. Dirichlet data on any part of the boundary pins the constant.' },
+  { q: 'For which source does the reference choice Φ(∞) = 0 fail?', o: ['An infinite line charge', 'A point charge', 'A uniformly charged sphere', 'A thin spherical shell'], a: 0, w: 'The potential of an infinite line grows like a logarithm of the distance, so it has no finite limit at infinity. Use a finite reference point.' },
+  { q: 'A uniformly charged sphere carries no surface charge at r = R. Which matching conditions apply there?', o: ['Φ and dΦ/dr are both continuous', 'Φ is continuous and dΦ/dr jumps by −ρ₀R/ε₀', 'Only dΦ/dr is continuous', 'Neither has to be continuous'], a: 0, w: 'Without surface charge the field has no jump, so the slope of Φ matches as well as Φ itself. This is what fixed B in Example B.' },
+  { q: 'Let n point from region 1 to region 2 across a surface carrying charge σ per unit area. What is ∂Φ₂/∂n − ∂Φ₁/∂n?', o: ['−σ/ε₀', '+σ/ε₀', 'σ', '0, because Φ is continuous'], a: 0, w: 'A Gaussian pillbox gives E₂ₙ − E₁ₙ = σ/ε₀, and E = −∇Φ flips the sign. Φ itself stays continuous, but its slope jumps.' },
+  { q: 'Why must the A/r term vanish when the region includes the origin?', o: ['It would add a point charge at the origin that the problem does not contain', 'Because Φ(∞) = 0', 'Because Φ must be negative', 'Because ρ = 0'], a: 0, w: 'The function 1/r is the potential of a point charge. If the origin is part of the region and carries no charge, the coefficient must be zero.' },
+  { q: 'A numerical solution of Laplace\'s equation shows a local maximum in the middle of a charge-free region. What is the most likely explanation?', o: ['An error in the solution, or a charge hidden there', 'The boundary values are too large', 'A normal feature of solutions of Laplace\'s equation', 'The grid is too fine'], a: 0, w: 'A solution of Laplace\'s equation equals the average of its neighbours, so it has no interior maximum or minimum. Look for a bug or a source.' }
+];
+const Q = { order: [], i: 0, score: 0, answered: false };
+function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+function startQuiz() { Q.i = 0; Q.score = 0; Q.answered = false; Q.opts = QUIZ.map(q => shuffle(q.o.map((t, k) => ({ t, ok: k === q.a })))); renderQuiz(); }
+function renderQuiz() {
+  const box = $('quiz');
+  if (Q.i >= QUIZ.length) {
+    const s = Q.score, msg = s === QUIZ.length ? 'Every answer correct.' : s >= 7 ? 'Solid. Review the explanations for the ones you missed.' : 'Go back to the slides on the questions you missed, then try again.';
+    box.innerHTML = `<p class="q">You scored ${s} out of ${QUIZ.length}.</p><p>${msg}</p><div class="btns"><button class="primary" id="again">Try again</button></div>`; $('again').onclick = startQuiz; return;
+  }
+  const q = QUIZ[Q.i], opts = Q.opts[Q.i];
+  box.innerHTML = `<div class="qmeta"><span>Question ${Q.i + 1} of ${QUIZ.length}</span><span>Score ${Q.score}</span></div><p class="q"></p><ul class="opts"></ul><div id="fb"></div>`;
+  box.querySelector('.q').textContent = q.q; const ul = box.querySelector('.opts');
+  opts.forEach((o, k) => { const li = document.createElement('li'), b = document.createElement('button'); b.textContent = o.t; b.onclick = () => answer(k); li.appendChild(b); ul.appendChild(li); });
+  Q.answered = false;
+}
+function answer(k) {
+  if (Q.answered) return; Q.answered = true; const q = QUIZ[Q.i], opts = Q.opts[Q.i], btns = $('quiz').querySelectorAll('.opts button');
+  btns.forEach((b, i) => { b.disabled = true; if (opts[i].ok) b.classList.add('right'); else if (i === k) b.classList.add('wrong'); });
+  const good = opts[k].ok; if (good) Q.score++;
+  $('fb').innerHTML = `<p class="why"><b>${good ? 'Correct.' : 'Not quite.'}</b> </p><div class="btns"><button class="primary" id="nx">${Q.i + 1 < QUIZ.length ? 'Next question' : 'See your score'}</button></div>`;
+  $('fb').querySelector('.why').appendChild(document.createTextNode(q.w)); $('nx').onclick = () => { Q.i++; renderQuiz(); }; $('nx').focus();
+}
+
+/* ========================================================= shell: tabs, text size, theme ========================================================= */
+const TABS = [['tab-a', 'pa', drawA], ['tab-b', 'pb', drawB], ['tab-c', 'pc', drawC], ['tab-d', 'pd', null]];
+let cur = 0;
+function show(i) {
+  cur = i; TABS.forEach(([t, p], k) => { $(t).setAttribute('aria-selected', k === i ? 'true' : 'false'); $(t).tabIndex = k === i ? 0 : -1; $(p).classList.toggle('hidden', k !== i); });
+  if (TABS[i][2]) requestAnimationFrame(TABS[i][2]);
+}
+TABS.forEach(([t], i) => { $(t).onclick = () => show(i); $(t).onkeydown = e => { if (e.key === 'ArrowRight') { show((cur + 1) % 4); $(TABS[cur][0]).focus(); } else if (e.key === 'ArrowLeft') { show((cur + 3) % 4); $(TABS[cur][0]).focus(); } }; });
+$('big').onclick = () => { const on = !document.body.classList.contains('big'); document.body.classList.toggle('big', on); $('big').setAttribute('aria-pressed', on); requestAnimationFrame(() => TABS[cur][2] && TABS[cur][2]()); };
+let rt = 0; window.addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(() => TABS[cur][2] && TABS[cur][2](), 80); });
+try { matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => TABS[cur][2] && TABS[cur][2]()); } catch (e) { /* older browsers */ }
+new MutationObserver(() => TABS[cur][2] && TABS[cur][2]()).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+initA(); initB(); initC(); startQuiz(); show(0);
+})();
+
+</script>
+</body>
+</html>
