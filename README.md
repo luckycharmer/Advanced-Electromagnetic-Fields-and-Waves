@@ -2,6 +2,11 @@
 
 Interactive course resources for PHY709 at COMSATS University Islamabad.
 
+## Current lecture
+
+- [8 October 2026: Electrostatic potential, Poisson and Laplace equations](lectures/2026-10-08-electrostatic-potential-poisson-laplace.md)
+- Includes a 90-minute flipped-learning sequence, numerical verification tasks and 30% solution scaffolds.
+
 ## Electrostatic Potential Explorer
 
 The interactive page supports graduate-level study of:
