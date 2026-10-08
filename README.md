@@ -13,4 +13,10 @@ The interactive page supports graduate-level study of:
 - finite-difference relaxation;
 - numerical validation and self-assessment.
 
-Open `index.html` through the published course site.
+The course-site entry point is `index.html`.
+
+## License
+
+- Software code: [MIT License](LICENSE-CODE)
+- Original educational content: [CC BY 4.0](LICENSE-CONTENT)
+- Scope and third-party exclusions: [Dual License Notice](LICENSE)
