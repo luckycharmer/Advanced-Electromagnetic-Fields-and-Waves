@@ -1,0 +1,4 @@
+interface:
+  display_name: "Lecture Kit"
+  short_description: "Build and verify reproducible lecture kits"
+  default_prompt: "Use $lecturekit to build a verified lecture kit from the official course context."
