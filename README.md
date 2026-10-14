@@ -4,6 +4,12 @@ Interactive course resources for PHY709 at COMSATS University Islamabad.
 
 ## Current lecture
 
+- [15 October 2026: Maxwell equations, constitutive relations and boundary conditions](lectures/2026-10-15-maxwell-constitutive-boundaries.md)
+- [Slides, derivation booklet, handout and assignment](lectures/2026-10-15-maxwell-constitutive-boundaries/README.md)
+- 150-minute lecture with 30 teaching slides and 12 supplementary derivation slides.
+
+## Previous lecture
+
 - [8 October 2026: Electrostatic potential, Poisson and Laplace equations](lectures/2026-10-08-electrostatic-potential-poisson-laplace.md)
 - Includes a 90-minute flipped-learning sequence, numerical verification tasks and 30% solution scaffolds.
 
