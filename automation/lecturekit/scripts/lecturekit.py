@@ -38,7 +38,7 @@ def buildhash(work):return digest(canonical(manifest(work)))
 def template(course,session,topic,duration):
     return {'meta':{'schema_version':1,'course':course,'session':session,'topic':topic,'date':None,'duration_minutes':duration,'timezone':'Asia/Karachi','level':'','handwriting_font':'Caveat'},
     'context':{k:{'verified':False,'fact':'','evidence_refs':[]} for k in CONTEXT},
-    'sources':[],'claims':[],'outcomes':[],'constants':[],'equations':[],'figures':[],'blocks':[],'questions':[],
+    'sources':[],'claims':[],'corrections':[],'outcomes':[],'constants':[],'equations':[],'figures':[],'blocks':[],'questions':[],
     'documents':[{'purpose':p,'title':p.replace('_',' ').title(),'block_ids':[],'question_ids':[],'public':p in ['reference','derivations']} for p in PURPOSES],
     'slides':[],'timeline':[],'interactive':{'enabled':False,'reason':'','benefit':'','html_path':'','fallback_block_ids':[],'test_evidence_refs':[]},
     'policy':{'public_document_purposes':['reference','derivations'],'required_disclosure':'','student_access':'','instructor_access':'private','publish_github':False}}
@@ -267,7 +267,9 @@ def build(work):
     for asset in ['Caveat.ttf','Caveat-OFL.txt','master.schema.json']:
         dest=source/'runtime/assets'/asset;dest.parent.mkdir(parents=True,exist_ok=True);shutil.copy2(ROOT/'assets'/asset,dest);add(dest,'instructor','runtime_asset')
     with (tmp/'INSTRUCTOR ONLY/source-register.csv').open('w',newline='') as f:
-        w=csv.writer(f);w.writerow(['id','title','uri','edition','status','accessed_at','sha256']);w.writerows([[s.get(k,'') for k in ['id','title','uri','edition','status','accessed_at','sha256']] for s in m['sources']])
+        w=csv.writer(f);w.writerow(['record_type','id','title_or_reason','uri_or_affected_ids','edition_or_before','status_or_after','accessed_at','sha256'])
+        w.writerows([['source']+[s.get(k,'') for k in ['id','title','uri','edition','status','accessed_at','sha256']] for s in m['sources']])
+        for c in m.get('corrections',[]):w.writerow(['correction',c.get('id',''),c.get('reason',''),','.join(c.get('affected_ids',[])),c.get('before',''),c.get('after',''),c.get('at',''),''])
     add(tmp/'INSTRUCTOR ONLY/source-register.csv','instructor','register')
     if m['interactive']['enabled']:
         shutil.copy2(path(work,m['interactive']['html_path']),tmp/'STUDENT FILES/exercise.html');add(tmp/'STUDENT FILES/exercise.html','student','interactive')
@@ -353,6 +355,15 @@ def evidence(work,refs):
 def receiptvalid(work,r):
     if r.get('master_sha256')!=masterhash(work) or r.get('manifest_sha256')!=buildhash(work):return False
     return all(path(work,e['path']).is_file() and sha(path(work,e['path']))==e['sha256'] for e in r.get('evidence',[])) and bool(r.get('evidence'))
+def delivery_items(work):
+    items=copy.deepcopy(manifest(work)['files'])
+    controls=work/'control-export';controls.mkdir(exist_ok=True)
+    for name,original in [('release-manifest.json',work/'build/manifest.json'),('quality-gates.json',work/'reviews.json')]:
+        if not original.exists():raise Blocked('Review/control metadata not ready for delivery')
+        dest=controls/name;shutil.copy2(original,dest)
+        items.append({'path':'CONTROL/'+name,'sha256':sha(dest),'size':dest.stat().st_size,'role':'instructor','purpose':'release_control','local_path':str(dest)})
+    for f in items:f.setdefault('local_path',str(work/'build'/f['path']))
+    return items
 def release(work,phase):
     current(work);reviews=load(work/'reviews.json') if (work/'reviews.json').exists() else {}
     required=range(1,14 if phase=='delivered' else 13);blocked=[]
@@ -361,7 +372,7 @@ def release(work,phase):
         if not receiptvalid(work,r) or r.get('status') not in (['pass','not_applicable'] if n==12 else ['pass']):blocked.append(f'{n}: {GATES[n-1]}')
     if phase=='delivered':
         receipts=load(work/'delivery.json') if (work/'delivery.json').exists() else {}
-        for f in manifest(work)['files']:
+        for f in delivery_items(work):
             r=receipts.get(f['path'],{})
             if r.get('sha256')!=f['sha256'] or not r.get('verified') or not r.get('remote_id') or not r.get('parent_id') or not r.get('evidence') or any(not path(work,e['path']).is_file() or sha(path(work,e['path']))!=e['sha256'] for e in r.get('evidence',[])):blocked.append('Delivery: '+f['path'])
     state={'state':'BLOCKED' if blocked else ('DELIVERY_VERIFIED' if phase=='delivered' else 'CONTENT_VERIFIED'),'blocked':blocked,'master_sha256':masterhash(work),'manifest_sha256':buildhash(work),'at':now()}
@@ -420,12 +431,12 @@ def main():
             r=load(a.work/'reviews.json') if (a.work/'reviews.json').exists() else {};r[str(a.number)]={'status':a.status,'reviewer':a.reviewer,'note':a.note,'evidence':evidence(a.work,a.evidence),'master_sha256':masterhash(a.work),'manifest_sha256':buildhash(a.work) if (a.work/'build/manifest.json').exists() else None,'at':now()};write(a.work/'reviews.json',r);result=r[str(a.number)]
         elif a.cmd=='record-delivery':
             release(a.work,'content')
-            mf=current(a.work);f=next((f for f in mf['files'] if f['path']==a.file),None)
+            current(a.work);f=next((f for f in delivery_items(a.work) if f['path']==a.file),None)
             if not f or a.readback_sha256!=f['sha256']:raise Blocked('Readback hash differs from current approved output')
             r=load(a.work/'delivery.json') if (a.work/'delivery.json').exists() else {};r[a.file]={'remote_id':a.remote_id,'parent_id':a.parent_id,'sha256':f['sha256'],'verified':True,'evidence':evidence(a.work,a.evidence),'at':now()};write(a.work/'delivery.json',r);result=r[a.file]
         elif a.cmd=='delivery-plan':
-            mf=current(a.work);r=load(a.work/'delivery.json') if (a.work/'delivery.json').exists() else {}
-            result={'operations':[dict(f,remote_id=r.get(f['path'],{}).get('remote_id'),operation='reconcile_or_skip' if r.get(f['path'],{}).get('sha256')==f['sha256'] else ('update' if r.get(f['path'],{}).get('remote_id') else 'create_after_reconciliation')) for f in mf['files']]}
+            release(a.work,'content');r=load(a.work/'delivery.json') if (a.work/'delivery.json').exists() else {}
+            result={'operations':[dict(f,remote_id=r.get(f['path'],{}).get('remote_id'),operation='reconcile_or_skip' if r.get(f['path'],{}).get('sha256')==f['sha256'] else ('update' if r.get(f['path'],{}).get('remote_id') else 'create_after_reconciliation')) for f in delivery_items(a.work)]}
         elif a.cmd=='status':
             result={'master_sha256':masterhash(a.work),'build_exists':(a.work/'build/manifest.json').exists()}
             try:current(a.work);result['build_current']=True
